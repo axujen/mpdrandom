@@ -16,6 +16,7 @@
 """This is a script to randomly select an album in the current mpd playlist."""
 
 import random
+import argparse
 
 try:
 	import mpd
@@ -36,14 +37,14 @@ class Client(mpd.MPDClient):
 	def __init__(self, server_id, password=False):
 		mpd.MPDClient.__init__(self)
 		self.connect(**server_id)
-		self.iterate = True
 		if password:
 			self.password(password)
 
 	def getalbums(self):
 		"""Grab a list of the albums in the playlist."""
+		playlist = self.playlistinfo()
 		albums = {}
-		for song in self.playlistinfo():
+		for song in playlist:
 			album = song['album']
 			if not album in albums:
 				albums[album] = [song]
@@ -65,8 +66,9 @@ class Client(mpd.MPDClient):
 		return random.choice(albums)
 
 	def play_album(self, album):
-		"""Play the given album."""
-		self.playid(album[0]['id'])
+		"""Play the first song in the given album."""
+		id = album[0]['id']
+		self.playid(id)
 
 	def play_random(self, albums=None):
 		"""Play a random album from the list of albums."""
@@ -76,7 +78,45 @@ class Client(mpd.MPDClient):
 		toplay = self.random_album(albums)
 		self.play_album(albums[toplay])
 
+	def atlast_song(self):
+		albums = self.getalbums()
+		album = albums[self.getcurrent_album()]
+		last_song = album[-1]['id']
+		cursong = self.currentsong()['id']
+		return True if last_song == cursong else False
 
+	def idleloop(self):
+		"""Loop for daemon mode."""
+		albums = self.getalbums()
+		while True:
+			album = self.getcurrent_album()
+			reasons = self.idle('playlist', 'player')
+			if 'playlist' in reasons:
+				albums = self.getalbums() # refresh albums
+				continue
+			elif 'player' in reasons:
+				if self.atlast_song():
+					self.idle('player')
+					self.play_random(albums)
+				else:
+					continue
+
+	def __del__(self):
+		"""Close client after exiting."""
+		self.close()
+
+
+## Arguments
+arguments = argparse.ArgumentParser()
+arguments.add_argument('-d', '--daemon', action='store_true', dest='daemon',
+		help='run the script in daemon mode.', default=False)
 if __name__ == '__main__':
+	args = arguments.parse_args()
 	client = Client(SERVER_ID)
-	client.play_random()
+	if args.daemon:
+		try:
+			client.idleloop()
+		except KeyboardInterrupt:
+			raise SystemExit # No need for the ugly traceback when interrupting.
+	else:
+		client.play_random()
