@@ -28,7 +28,7 @@ except ImportError:
 MPD_ADDRESS = "127.0.0.1"
 MPD_PORT = "6600"
 PASSWORD = False
-SERVER_ID = {"HOST":MPD_ADDRESS, "PORT":MPD_PORT}
+SERVER_ID = {"host":MPD_ADDRESS, "port":MPD_PORT}
 
 class Client(mpd.MPDClient):
 	"""Client that connects and communicates with the mpd server."""
@@ -68,10 +68,15 @@ class Client(mpd.MPDClient):
 		"""Play the given album."""
 		self.playid(album[0]['id'])
 
-	def play_random(self, albums):
+	def play_random(self, albums=None):
 		"""Play a random album from the list of albums."""
 		if not albums:
 			albums = self.getalbums()
 
 		toplay = self.random_album(albums)
 		self.play_album(albums[toplay])
+
+
+if __name__ == '__main__':
+	client = Client(SERVER_ID)
+	client.play_random()
