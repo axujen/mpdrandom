@@ -25,7 +25,10 @@ except ImportError:
 			'https://pypi.python.org/pypi?:action=display&name=python-mpd2')
 	raise SystemExit
 
-# Server info
+# Default Server info, change these values to match yours.
+HOST='127.0.0.1'
+PORT='6600'
+PASSWORD=None
 
 class Client(mpd.MPDClient):
 	"""Client that connects and communicates with the mpd server."""
@@ -107,11 +110,11 @@ class Client(mpd.MPDClient):
 arguments = argparse.ArgumentParser()
 arguments.add_argument('-d', '--daemon', action='store_true', dest='daemon',
 		help='run the script in daemon mode.', default=False)
-arguments.add_argument('-p', '--port', dest='port', default='6600',
-		help='specify mpd\'s port (defaults to 6600)', metavar='PORT')
-arguments.add_argument('-u', '--host', dest='host', default='127.0.0.1',
-		help='specify mpd\'s host (defaults to 127.0.0.1)', metavar='HOST')
-arguments.add_argument('--password', dest='password', default=False,
+arguments.add_argument('-p', '--port', dest='port', default=PORT,
+		help='specify mpd\'s port (defaults to {})'.format(PORT), metavar='PORT')
+arguments.add_argument('-u', '--host', dest='host', default=HOST,
+		help='specify mpd\'s host (defaults to {})'.format(HOST), metavar='HOST')
+arguments.add_argument('--password', dest='password', default=PASSWORD,
 		help='specify mpd\'s password', metavar='PASSWORD')
 
 if __name__ == '__main__':
