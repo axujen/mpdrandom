@@ -15,6 +15,8 @@
 
 """This is a script to randomly select an album in the current mpd playlist."""
 
+import random
+
 try:
 	import mpd
 except ImportError:
@@ -48,5 +50,28 @@ class Client(mpd.MPDClient):
 			else:
 				albums[album].append(song)
 
-		self.albums = albums
 		return albums
+
+	def getcurrent_album(self):
+		"""Get the current playing album."""
+		return self.currentsong()['album']
+
+	def random_album(self, albums):
+		"""Get a random album from the albums dictionary."""
+		albums = list(albums.keys())
+		# Everything except the current playing album
+		current_album = self.getcurrent_album()
+		albums.pop(albums.index(current_album))
+		return random.choice(albums)
+
+	def play_album(self, album):
+		"""Play the given album."""
+		self.playid(album[0]['id'])
+
+	def play_random(self, albums):
+		"""Play a random album from the list of albums."""
+		if not albums:
+			albums = self.getalbums()
+
+		toplay = self.random_album(albums)
+		self.play_album(albums[toplay])
