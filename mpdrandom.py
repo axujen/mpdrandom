@@ -26,10 +26,6 @@ except ImportError:
 	raise SystemExit
 
 # Server info
-MPD_ADDRESS = "127.0.0.1"
-MPD_PORT = "6600"
-PASSWORD = False
-SERVER_ID = {"host":MPD_ADDRESS, "port":MPD_PORT}
 
 class Client(mpd.MPDClient):
 	"""Client that connects and communicates with the mpd server."""
@@ -97,7 +93,8 @@ class Client(mpd.MPDClient):
 			elif 'player' in reasons:
 				if self.atlast_song():
 					self.idle('player')
-					self.play_random(albums)
+					if self.getcurrent_album() != album:
+						self.play_random(albums)
 				else:
 					continue
 
@@ -110,9 +107,17 @@ class Client(mpd.MPDClient):
 arguments = argparse.ArgumentParser()
 arguments.add_argument('-d', '--daemon', action='store_true', dest='daemon',
 		help='run the script in daemon mode.', default=False)
+arguments.add_argument('-p', '--port', dest='port', default='6600',
+		help='specify mpd\'s port (defaults to 6600)', metavar='PORT')
+arguments.add_argument('-u', '--host', dest='host', default='127.0.0.1',
+		help='specify mpd\'s host (defaults to 127.0.0.1)', metavar='HOST')
+arguments.add_argument('--password', dest='password', default=False,
+		help='specify mpd\'s password', metavar='PASSWORD')
+
 if __name__ == '__main__':
 	args = arguments.parse_args()
-	client = Client(SERVER_ID)
+	SERVER_ID = {"host":args.host, "port":args.port}
+	client = Client(SERVER_ID, args.password)
 	if args.daemon:
 		try:
 			client.idleloop()
