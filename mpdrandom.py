@@ -101,6 +101,27 @@ class Client(mpd.MPDClient):
 				else:
 					continue
 
+	def insert_album(self, album):
+		"""Insert an album in the playlist."""
+		for song in album:
+			self.add(song['file'])
+
+	def shuffle_albums(self):
+		"""Shuffle the albums in the playlist."""
+		albums = self.getalbums()
+
+		# Shuffle the albums
+		album_names = list(albums.keys())
+		random.shuffle(album_names)
+
+		# Clear the playlist
+		self.clear()
+
+		# Insert the new shuffled list
+		for album in album_names:
+			self.insert_album(albums[album])
+
+
 	def __del__(self):
 		"""Close client after exiting."""
 		self.close()
@@ -116,6 +137,8 @@ arguments.add_argument('-u', '--host', dest='host', default=HOST,
 		help='specify mpd\'s host (defaults to {})'.format(HOST), metavar='HOST')
 arguments.add_argument('--password', dest='password', default=PASSWORD,
 		help='specify mpd\'s password', metavar='PASSWORD')
+arguments.add_argument('-z', '--shuffle', dest="shuffle", action='store_true',
+		default=False, help='Shuffle the albums in the current playlist.')
 
 if __name__ == '__main__':
 	args = arguments.parse_args()
@@ -126,5 +149,8 @@ if __name__ == '__main__':
 			client.idleloop()
 		except KeyboardInterrupt:
 			raise SystemExit # No need for the ugly traceback when interrupting.
+	elif args.shuffle:
+		client.shuffle_albums()
+		raise SystemExit
 	else:
 		client.play_random()
