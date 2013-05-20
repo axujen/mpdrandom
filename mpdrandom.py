@@ -149,6 +149,7 @@ if __name__ == '__main__':
 	client = Client(SERVER_ID, args.password)
 	if args.daemon:
 		try:
+			print("Going into daemon mode, press Ctrl-C to exit.")
 			client.idleloop()
 		except KeyboardInterrupt:
 			raise SystemExit # No need for the ugly traceback when interrupting.
