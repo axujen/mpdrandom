@@ -44,7 +44,10 @@ class Client(mpd.MPDClient):
 		playlist = self.playlistinfo()
 		albums = {}
 		for song in playlist:
-			album = song['album']
+			try:
+				album = song['album']
+			except KeyError:
+				album = 'None'
 			if not album in albums:
 				albums[album] = [song]
 			else:
@@ -131,14 +134,14 @@ class Client(mpd.MPDClient):
 arguments = argparse.ArgumentParser()
 arguments.add_argument('-d', '--daemon', action='store_true', dest='daemon',
 		help='run the script in daemon mode.', default=False)
+arguments.add_argument('-z', '--shuffle', dest="shuffle", action='store_true',
+		default=False, help='shuffle the albums in the current playlist.')
 arguments.add_argument('-p', '--port', dest='port', default=PORT,
 		help='specify mpd\'s port (defaults to {})'.format(PORT), metavar='PORT')
 arguments.add_argument('-u', '--host', dest='host', default=HOST,
 		help='specify mpd\'s host (defaults to {})'.format(HOST), metavar='HOST')
 arguments.add_argument('--password', dest='password', default=PASSWORD,
 		help='specify mpd\'s password', metavar='PASSWORD')
-arguments.add_argument('-z', '--shuffle', dest="shuffle", action='store_true',
-		default=False, help='Shuffle the albums in the current playlist.')
 
 if __name__ == '__main__':
 	args = arguments.parse_args()
