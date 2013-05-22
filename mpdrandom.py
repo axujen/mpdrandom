@@ -16,7 +16,7 @@
 """This is a script to randomly select an album in the current mpd playlist."""
 
 import random
-import argparse
+from argparse import ArgumentParser
 
 try:
 	import mpd
@@ -104,52 +104,32 @@ class Client(mpd.MPDClient):
 				else:
 					continue
 
-	def insert_album(self, album):
+	def insert_album(self, album, pos=0):
 		"""Insert an album in the playlist."""
 		for song in album:
-			self.add(song['file'])
+			self.moveid(song['id'], pos)
+			pos += 1
 
 	def shuffle_albums(self):
 		"""Shuffle the albums in the playlist."""
 		albums = self.getalbums()
 
-		# Remember the current song information
-		status = self.status()['state']
-		cursong = self.currentsong()
-		try:
-			position = self.status()['time'].split(':', 1)[0]
-		except KeyError:
-			position = 0
-
 		# Shuffle the albums
 		album_names = list(albums.keys())
 		random.shuffle(album_names)
-
-		# Clear the playlist
-		self.clear()
 
 		# Insert the new shuffled list
 		for album in album_names:
 			self.insert_album(albums[album])
 
-		# Resume playing the last song from the last position
-		if not status == 'stop':
-			# IDs change after shuffling, gotta find the new id by searching
-			# for the filename
-			cursong = self.playlistfind('file', cursong['file'])[0]
-			self.playid(cursong['id'])
-			self.seekcur(position)
-			if status == 'pause':
-				self.pause()
-
-
 	def __del__(self):
 		"""Close client after exiting."""
 		self.close()
 
-
 ## Arguments
-arguments = argparse.ArgumentParser()
+arguments = ArgumentParser(description="""mpdrandom is a script that adds a
+little bit of randomness to mpds albums""", epilog="""Run the script with no
+arguments and it will pick a random album from the playlist and play it.""")
 arguments.add_argument('-d', '--daemon', action='store_true', dest='daemon',
 		help='run the script in daemon mode.', default=False)
 arguments.add_argument('-z', '--shuffle', dest="shuffle", action='store_true',
