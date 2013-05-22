@@ -113,6 +113,14 @@ class Client(mpd.MPDClient):
 		"""Shuffle the albums in the playlist."""
 		albums = self.getalbums()
 
+		# Remember the current song information
+		status = self.status()['state']
+		cursong = self.currentsong()
+		try:
+			position = self.status()['time'].split(':', 1)[0]
+		except KeyError:
+			position = 0
+
 		# Shuffle the albums
 		album_names = list(albums.keys())
 		random.shuffle(album_names)
@@ -123,6 +131,16 @@ class Client(mpd.MPDClient):
 		# Insert the new shuffled list
 		for album in album_names:
 			self.insert_album(albums[album])
+
+		# Resume playing the last song from the last position
+		if not status == 'stop':
+			# IDs change after shuffling, gotta find the new id by searching
+			# for the filename
+			cursong = self.playlistfind('file', cursong['file'])[0]
+			self.playid(cursong['id'])
+			self.seekcur(position)
+			if status == 'pause':
+				self.pause()
 
 
 	def __del__(self):
