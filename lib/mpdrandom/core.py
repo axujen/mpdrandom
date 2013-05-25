@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
+# -*- coding: UTF-8 -*-
 # © Copyright 2013 axujen, <axujen at gmail.com>. All Rights Reserved.
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,6 +30,10 @@ except ImportError:
 HOST='127.0.0.1'
 PORT='6600'
 PASSWORD=None
+
+__version__ = '1.1'
+__author__ = 'Axujen'
+__email__ = 'axujen@gmail.com'
 
 class Client(mpd.MPDClient):
 	"""Client that connects and communicates with the mpd server."""
@@ -104,7 +109,7 @@ class Client(mpd.MPDClient):
 				else:
 					continue
 
-	def insert_album(self, album, pos=0):
+	def move_album(self, album, pos=0):
 		"""Insert an album in the playlist."""
 		for song in album:
 			self.moveid(song['id'], pos)
@@ -120,7 +125,7 @@ class Client(mpd.MPDClient):
 
 		# Insert the new shuffled list
 		for album in album_names:
-			self.insert_album(albums[album])
+			self.move_album(albums[album])
 
 	def __del__(self):
 		"""Close client after exiting."""
@@ -141,7 +146,7 @@ arguments.add_argument('-u', '--host', dest='host', default=HOST,
 arguments.add_argument('--password', dest='password', default=PASSWORD,
 		help='specify mpd\'s password', metavar='PASSWORD')
 
-if __name__ == '__main__':
+def main():
 	args = arguments.parse_args()
 	SERVER_ID = {"host":args.host, "port":args.port}
 	client = Client(SERVER_ID, args.password)
@@ -156,3 +161,6 @@ if __name__ == '__main__':
 		raise SystemExit
 	else:
 		client.play_random()
+
+if __name__ == '__main__':
+	main()
