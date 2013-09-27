@@ -31,7 +31,7 @@ HOST='127.0.0.1'
 PORT='6600'
 PASSWORD=None
 
-__version__ = '1.1'
+__version__ = '1.1.1'
 __author__ = 'Axujen'
 __email__ = 'axujen@gmail.com'
 
@@ -74,8 +74,9 @@ class Client(mpd.MPDClient):
 
 	def play_album(self, album):
 		"""Play the first song in the given album."""
-		id = album[0]['id']
-		self.playid(id)
+		song = album[0]
+		print('Playing album "%s".' % song['album'])
+		self.playid(song['id'])
 
 	def play_random(self, albums=None):
 		"""Play a random album from the list of albums."""

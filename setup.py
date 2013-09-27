@@ -14,7 +14,7 @@ setup(
     author = "Axujen",
     author_email = "axujen@gmail",
 	url = "https://github.com/axujen/mpdrandom",
-    keywords = ["mpd", "album", "random"],
+    keywords = ["mpd", "album", "random", "shuffle", "music"],
     classifiers = [
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
