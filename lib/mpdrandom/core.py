@@ -75,7 +75,7 @@ class Client(mpd.MPDClient):
 	def play_album(self, album):
 		"""Play the first song in the given album."""
 		song = album[0]
-		print('Playing album "%s".' % song['album'])
+		print('Playing album "%s - %s".' % (song['artist'], song['album']))
 		self.playid(song['id'])
 
 	def play_random(self, albums=None):
