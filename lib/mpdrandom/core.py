@@ -17,7 +17,6 @@
 """This is a script to randomly select an album in the current mpd playlist."""
 
 import random
-from argparse import ArgumentParser
 
 try:
 	import mpd
@@ -132,23 +131,24 @@ class Client(mpd.MPDClient):
 		"""Close client after exiting."""
 		self.close()
 
-## Arguments
-arguments = ArgumentParser(description="""mpdrandom is a script that adds a
-little bit of randomness to mpds albums""", epilog="""Run the script with no
-arguments and it will pick a random album from the playlist and play it.""")
-arguments.add_argument('-d', '--daemon', action='store_true', dest='daemon',
-		help='run the script in daemon mode.', default=False)
-arguments.add_argument('-z', '--shuffle', dest="shuffle", action='store_true',
-		default=False, help='shuffle the albums in the current playlist.')
-arguments.add_argument('-p', '--port', dest='port', default=PORT,
-		help='specify mpd\'s port (defaults to {})'.format(PORT), metavar='PORT')
-arguments.add_argument('-u', '--host', dest='host', default=HOST,
-		help='specify mpd\'s host (defaults to {})'.format(HOST), metavar='HOST')
-arguments.add_argument('--password', dest='password', default=PASSWORD,
-		help='specify mpd\'s password', metavar='PASSWORD')
 
 def main():
+	## Arguments
+	from argparse import ArgumentParser
+	arguments = ArgumentParser(description="Pick and play a random album from "\
+			"the current playlist")
+	arguments.add_argument('-d', '--daemon', action='store_true', dest='daemon',
+			help='run the script in daemon mode.', default=False)
+	arguments.add_argument('-z', '--shuffle', dest="shuffle", action='store_true',
+			default=False, help='shuffle the albums in the current playlist.')
+	arguments.add_argument('-p', '--port', dest='port', default=PORT,
+			help='specify mpd\'s port (defaults to {})'.format(PORT), metavar='PORT')
+	arguments.add_argument('-u', '--host', dest='host', default=HOST,
+			help='specify mpd\'s host (defaults to {})'.format(HOST), metavar='HOST')
+	arguments.add_argument('--password', dest='password', default=PASSWORD,
+			help='specify mpd\'s password', metavar='PASSWORD')
 	args = arguments.parse_args()
+
 	SERVER_ID = {"host":args.host, "port":args.port}
 	client = Client(SERVER_ID, args.password)
 	if args.daemon:
