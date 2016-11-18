@@ -86,16 +86,23 @@ class Client(mpd.MPDClient):
         print('Playing album "%s - %s".' % (song['artist'], song['album']))
         self.playid(song['id'])
 
-    def play_random(self, albums=None):
+    def play_random(self, lib=False):
         """Play a random album from the list of albums."""
-        if not albums:
+        if not lib:  # Play from the playlist
             albums = self.getalbums()
+            toplay = self.random_album(albums)
+            if toplay:  # Make sure we found a random album
+                self.play_album(albums[toplay])
+            else:
+                print("Nothing to play.")
+        else:  # Play from the library
+            album_name = random.choice(self.list('album'))  # Select a random album from the library
+            if album_name:
+                if album_name not in self.getalbums():  # Queue the album if not queued
+                    self.findadd('album', album_name)
 
-        toplay = self.random_album(albums)
-        if toplay:  # Make sure we found a random album
-            self.play_album(albums[toplay])
-        else:
-            print("Nothing to play from the playlist")
+                album = self.getalbums()[album_name]
+                self.play_album(album)
 
     def atlast_song(self):
         albums = self.getalbums()
@@ -104,13 +111,13 @@ class Client(mpd.MPDClient):
         cursong = self.currentsong()['id']
         return True if last_song == cursong else False
 
-    def idleloop(self):
+    def idleloop(self, lib):
         """Loop for daemon mode."""
         while True:
             self.idle('player')
             if self.atlast_song():  # Started playing the last song
                 self.idle('player')  # Wait for it to end
-                self.play_random()
+                self.play_random(lib)
             continue
 
     def move_album(self, album, pos=0):
@@ -143,6 +150,8 @@ def main():
                                "the current playlist")
     arguments.add_argument('-d', '--daemon', action='store_true', dest='daemon',
                     help='run the script in daemon mode.', default=False)
+    arguments.add_argument('-l', '--library', action='store_true', dest='library',
+                          default=False, help='use the whole library instead of playlist.')
     arguments.add_argument('-z', '--shuffle', dest="shuffle", action='store_true',
                     default=False, help='shuffle the albums in the current playlist.')
     arguments.add_argument('-p', '--port', dest='port', default=PORT,
@@ -158,14 +167,14 @@ def main():
     if args.daemon:
         try:
             print("Going into daemon mode, press Ctrl-C to exit.")
-            client.idleloop()
+            client.idleloop(lib=args.library)
         except KeyboardInterrupt:
             raise SystemExit  # No need for the ugly traceback when interrupting.
     elif args.shuffle:
         client.shuffle_albums()
         raise SystemExit
     else:
-        client.play_random()
+        client.play_random(lib=args.library)
 
 if __name__ == '__main__':
     main()
