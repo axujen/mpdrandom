@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 import sys
-sys.path.append('lib')
-from mpdrandom.core import main
+from lib.mpdrandom import main
 
 if __name__ == '__main__':
 	main()
