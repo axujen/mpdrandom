@@ -101,20 +101,12 @@ class Client(mpd.MPDClient):
 
     def idleloop(self):
         """Loop for daemon mode."""
-        albums = self.getalbums()
         while True:
-            album = self.getcurrent_album()
-            reasons = self.idle('playlist', 'player')
-            if 'playlist' in reasons:
-                albums = self.getalbums()  # refresh albums
-                continue
-            elif 'player' in reasons:
-                if self.atlast_song():
-                    self.idle('player')
-                    if self.getcurrent_album() != album:
-                        self.play_random(albums)
-                else:
-                    continue
+            self.idle('player')
+            if self.atlast_song():  # Started playing the last song
+                self.idle('player')  # Wait for it to end
+                self.play_random()
+            continue
 
     def move_album(self, album, pos=0):
         """Insert an album in the playlist."""
