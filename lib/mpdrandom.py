@@ -70,7 +70,10 @@ class Client(mpd.MPDClient):
         # Everything except the current playing album
         current_album = self.getcurrent_album()
         albums.pop(albums.index(current_album))
-        return random.choice(albums)
+        if albums:
+            return random.choice(albums)
+        else:
+            return None
 
     def play_album(self, album):
         """Play the first song in the given album."""
@@ -84,7 +87,10 @@ class Client(mpd.MPDClient):
             albums = self.getalbums()
 
         toplay = self.random_album(albums)
-        self.play_album(albums[toplay])
+        if toplay:  # Make sure we found a random album
+            self.play_album(albums[toplay])
+        else:
+            print("Nothing to play from the playlist")
 
     def atlast_song(self):
         albums = self.getalbums()
