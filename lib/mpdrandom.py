@@ -61,15 +61,20 @@ class Client(mpd.MPDClient):
         return albums
 
     def getcurrent_album(self):
-        """Get the current playing album."""
-        return self.currentsong()['album']
+        """Get the currently playing album."""
+        try:
+            album = self.currentsong()['album']
+        except KeyError:
+            album = None
+        return album
 
     def random_album(self, albums):
         """Get a random album from the albums dictionary."""
         albums = list(albums.keys())
         # Everything except the current playing album
         current_album = self.getcurrent_album()
-        albums.pop(albums.index(current_album))
+        if current_album:
+            albums.pop(albums.index(current_album))
         if albums:
             return random.choice(albums)
         else:
