@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 from distutils.core import setup
 from lib import PV
 
@@ -14,7 +14,6 @@ setup(name="mpdrandom",
       license="License :: OSI Approved :: GNU General Public License (GPL)",
       classifiers=[
           "Programming Language :: Python",
-          "Programming Language :: Python :: 3",
           "Development Status :: 4 - Beta",
       ],
     long_description="""\
