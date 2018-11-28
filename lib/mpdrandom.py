@@ -104,20 +104,12 @@ class Client(mpd.MPDClient):
                 album = self.getalbums()[album_name]
                 self.play_album(album)
 
-    def atlast_song(self):
-        albums = self.getalbums()
-        album = albums[self.getcurrent_album()]
-        last_song = album[-1]['id']
-        cursong = self.currentsong()['id']
-        return True if last_song == cursong else False
-
     def idleloop(self, lib):
         """Loop for daemon mode."""
         while True:
-            self.idle('player')
-            if self.atlast_song():  # Started playing the last song
-                self.idle('player')  # Wait for it to end
+            if not self.currentsong():
                 self.play_random(lib)
+            self.idle('player')
             continue
 
     def move_album(self, album, pos=0):
