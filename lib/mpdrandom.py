@@ -86,7 +86,7 @@ class Client(mpd.MPDClient):
         print('Playing album "%s - %s".' % (song.get('artist', '<no artist>'), song.get('album', '<no album>')))
         self.playid(song['id'])
 
-    def play_random(self, lib=False):
+    def play_random(self, lib=False, clear=False):
         """Play a random album from the list of albums."""
         if not lib:  # Play from the playlist
             albums = self.getalbums()
@@ -96,6 +96,8 @@ class Client(mpd.MPDClient):
             else:
                 print("Nothing to play.")
         else:  # Play from the library
+            if clear:
+                self.clear()
             album_name = random.choice(self.list('album'))  # Select a random album from the library
             if album_name:
                 if album_name not in self.getalbums():  # Queue the album if not queued
@@ -104,11 +106,11 @@ class Client(mpd.MPDClient):
                 album = self.getalbums()[album_name]
                 self.play_album(album)
 
-    def idleloop(self, lib):
+    def idleloop(self, lib, clear):
         """Loop for daemon mode."""
         while True:
             if not self.currentsong():
-                self.play_random(lib)
+                self.play_random(lib, clear)
             self.idle('player')
             continue
 
@@ -144,6 +146,8 @@ def main():
                     help='run the script in daemon mode.', default=False)
     arguments.add_argument('-l', '--library', action='store_true', dest='library',
                           default=False, help='use the whole library instead of playlist.')
+    arguments.add_argument('-c', '--clear', action='store_true', dest='clear',
+                          default=False, help='clear the playlist before adding new album when using the whole library')
     arguments.add_argument('-z', '--shuffle', dest="shuffle", action='store_true',
                     default=False, help='shuffle the albums in the current playlist.')
     arguments.add_argument('-p', '--port', dest='port', default=PORT,
@@ -159,14 +163,14 @@ def main():
     if args.daemon:
         try:
             print("Going into daemon mode, press Ctrl-C to exit.")
-            client.idleloop(lib=args.library)
+            client.idleloop(lib=args.library, clear=args.clear)
         except KeyboardInterrupt:
             raise SystemExit  # No need for the ugly traceback when interrupting.
     elif args.shuffle:
         client.shuffle_albums()
         raise SystemExit
     else:
-        client.play_random(lib=args.library)
+        client.play_random(lib=args.library, clear=args.clear)
 
 if __name__ == '__main__':
     main()
