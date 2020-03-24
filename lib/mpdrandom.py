@@ -86,6 +86,10 @@ class Client(mpd.MPDClient):
         print('Playing album "%s - %s".' % (song.get('artist', '<no artist>'), song.get('album', '<no album>')))
         self.playid(song['id'])
 
+    def get_mpd_lib_version(self):
+        version = mpd.VERSION
+        return version[0]*100 + version[1]*10 + version[2]
+
     def play_random(self, lib=False, clear=False):
         """Play a random album from the list of albums."""
         if not lib:  # Play from the playlist
@@ -99,6 +103,9 @@ class Client(mpd.MPDClient):
             if clear:
                 self.clear()
             album_name = random.choice(self.list('album'))  # Select a random album from the library
+            if self.get_mpd_lib_version() >= 110:
+                # Since version 1.1.0 list returns a list of dictionaries
+                album_name = album_name['album']
             if album_name:
                 if album_name not in self.getalbums():  # Queue the album if not queued
                     self.findadd('album', album_name)
