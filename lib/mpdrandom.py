@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 # © Copyright 2013, 2016 axujen, <axujen at gmail.com>. All Rights Reserved.
 # This program is free software: you can redistribute it and/or modify
