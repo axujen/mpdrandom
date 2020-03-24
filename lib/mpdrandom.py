@@ -17,6 +17,8 @@
 """This is a script to randomly select an album in the current mpd playlist."""
 
 import random
+import select
+import sys
 
 try:
     import mpd
@@ -116,10 +118,18 @@ class Client(mpd.MPDClient):
     def idleloop(self, lib, clear):
         """Loop for daemon mode."""
         while True:
-            if not self.currentsong():
-                self.play_random(lib, clear)
-            self.idle('player')
-            continue
+            while self.currentsong():
+                self.send_idle('player')
+                try:
+                    i, o, e  = select.select([self, sys.stdin], [], [])
+                except KeyboardInterrupt:
+                    sys.exit()
+                finally:
+                    self.noidle()
+                if sys.stdin in i:
+                    sys.stdin.readline()
+                    break
+            self.play_random(lib, clear)
 
     def move_album(self, album, pos=0):
         """Insert an album in the playlist."""
@@ -170,6 +180,7 @@ def main():
     if args.daemon:
         try:
             print("Going into daemon mode, press Ctrl-C to exit.")
+            print("Press Enter to skip the current album.")
             client.idleloop(lib=args.library, clear=args.clear)
         except KeyboardInterrupt:
             raise SystemExit  # No need for the ugly traceback when interrupting.
