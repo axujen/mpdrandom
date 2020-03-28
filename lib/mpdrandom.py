@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 # © Copyright 2013, 2016 axujen, <axujen at gmail.com>. All Rights Reserved.
 # This program is free software: you can redistribute it and/or modify
@@ -17,6 +17,8 @@
 """This is a script to randomly select an album in the current mpd playlist."""
 
 import random
+import select
+import sys
 
 try:
     import mpd
@@ -86,6 +88,10 @@ class Client(mpd.MPDClient):
         print('Playing album "%s - %s".' % (song.get('artist', '<no artist>'), song.get('album', '<no album>')))
         self.playid(song['id'])
 
+    def get_mpd_lib_version(self):
+        version = mpd.VERSION
+        return version[0]*100 + version[1]*10 + version[2]
+
     def play_random(self, lib=False, clear=False):
         """Play a random album from the list of albums."""
         if not lib:  # Play from the playlist
@@ -99,6 +105,9 @@ class Client(mpd.MPDClient):
             if clear:
                 self.clear()
             album_name = random.choice(self.list('album'))  # Select a random album from the library
+            if self.get_mpd_lib_version() >= 110:
+                # Since version 1.1.0 list returns a list of dictionaries
+                album_name = album_name['album']
             if album_name:
                 if album_name not in self.getalbums():  # Queue the album if not queued
                     self.findadd('album', album_name)
@@ -109,10 +118,18 @@ class Client(mpd.MPDClient):
     def idleloop(self, lib, clear):
         """Loop for daemon mode."""
         while True:
-            if not self.currentsong():
-                self.play_random(lib, clear)
-            self.idle('player')
-            continue
+            while self.currentsong():
+                self.send_idle('player')
+                try:
+                    i, o, e  = select.select([self, sys.stdin], [], [])
+                except KeyboardInterrupt:
+                    sys.exit()
+                finally:
+                    self.noidle()
+                if sys.stdin in i:
+                    sys.stdin.readline()
+                    break
+            self.play_random(lib, clear)
 
     def move_album(self, album, pos=0):
         """Insert an album in the playlist."""
@@ -163,6 +180,7 @@ def main():
     if args.daemon:
         try:
             print("Going into daemon mode, press Ctrl-C to exit.")
+            print("Press Enter to skip the current album.")
             client.idleloop(lib=args.library, clear=args.clear)
         except KeyboardInterrupt:
             raise SystemExit  # No need for the ugly traceback when interrupting.
