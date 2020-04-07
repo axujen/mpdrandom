@@ -19,13 +19,8 @@
 import random
 import select
 import sys
+import mpd
 
-try:
-    import mpd
-except ImportError:
-    print('You must install the python-mpd2 library. You can get it from: '
-          'https://pypi.python.org/pypi?:action=display&name=python-mpd2')
-    raise SystemExit
 
 # Default Server info, change these values to match yours.
 HOST = '127.0.0.1'
