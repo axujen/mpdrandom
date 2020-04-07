@@ -5,9 +5,14 @@ from lib import PV
 setup(name="mpdrandom",
       packages=["lib"],
       scripts=['mpdrandom'],
+      entry_points={
+          'console_scripts': ['mpdrandom=lib.mpdrandom:main'],
+      },
+
       version=PV,
       description="mpd albums randomizing script",
       author="Axujen",
+      install_requires=("python-mpd2"),
       author_email="axujen (at) autistici.org",
       url="https://github.com/axujen/mpdrandom",
       keywords=["mpd", "album", "random", "shuffle", "music"],

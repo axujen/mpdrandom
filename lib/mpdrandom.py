@@ -32,9 +32,6 @@ HOST = '127.0.0.1'
 PORT = '6600'
 PASSWORD = None
 
-__version__ = '1.2.0'
-__author__ = 'Axujen'
-__email__ = 'axujen@gmail.com'
 
 
 class Client(mpd.MPDClient):
