@@ -19,22 +19,14 @@
 import random
 import select
 import sys
+import mpd
 
-try:
-    import mpd
-except ImportError:
-    print('You must install the python-mpd2 library. You can get it from: '
-          'https://pypi.python.org/pypi?:action=display&name=python-mpd2')
-    raise SystemExit
 
 # Default Server info, change these values to match yours.
 HOST = '127.0.0.1'
 PORT = '6600'
 PASSWORD = None
 
-__version__ = '1.2.0'
-__author__ = 'Axujen'
-__email__ = 'axujen@gmail.com'
 
 
 class Client(mpd.MPDClient):
