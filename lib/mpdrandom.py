@@ -86,7 +86,7 @@ class Client(MPDClient):
         version = VERSION
         return version[0]*100 + version[1]*10 + version[2]
 
-    async def play_random(self, lib=False, clear=False):
+    async def play_random(self, lib=False, clear=False, base=None):
         """Play a random album from the list of albums."""
         if not lib:  # Play from the playlist
             albums = await self.getalbums()
@@ -98,7 +98,12 @@ class Client(MPDClient):
         else:  # Play from the library
             if clear:
                 self.clear()
-            album_name = random.choice(await self.list('album'))  # Select a random album from the library
+            album_name = None
+            if base:
+                album_name = random.choice(await self.list('album', 'base', base))
+            else:
+                album_name = random.choice(await self.list('album'))
+
             if self.get_mpd_lib_version() >= 110:
                 # Since version 1.1.0 list returns a list of dictionaries
                 album_name = album_name['album']
@@ -126,7 +131,7 @@ class Client(MPDClient):
                 # make sure that the message was handled
                 await queue.join()
 
-    async def idleloop(self, lib, clear):
+    async def idleloop(self, lib, clear, base):
         """Loop for daemon mode."""
 
         # Create a queue that we will use to return events in those two cases:
@@ -149,7 +154,7 @@ class Client(MPDClient):
         # both of the above will push messages into the queue
         while True:
             await queue.get()
-            await self.play_random(lib, clear)
+            await self.play_random(lib, clear, base)
             queue.task_done()
 
     async def move_album(self, album, pos=0):
@@ -187,7 +192,9 @@ async def async_main():
     arguments.add_argument('-u', '--host', dest='host', default=HOST,
                     help='specify mpd\'s host (defaults to {})'.format(HOST), metavar='HOST')
     arguments.add_argument('--password', dest='password', default=PASSWORD,
-                    help='specify mpd\'s password', metavar='PASSWORD')
+                           help='specify mpd\'s password', metavar='PASSWORD')
+    arguments.add_argument('-b', '--base', dest='base', default=None,
+                           help='specify base directory for adding from library')
     args = arguments.parse_args()
 
     client = Client(args.password)
@@ -195,11 +202,11 @@ async def async_main():
     if args.daemon:
         print("Going into daemon mode, press Ctrl-C to exit.")
         print("Press Enter to skip the current album.")
-        await client.idleloop(lib=args.library, clear=args.clear)
+        await client.idleloop(lib=args.library, clear=args.clear, base=args.base)
     elif args.shuffle:
         await client.shuffle_albums()
     else:
-        await client.play_random(lib=args.library, clear=args.clear)
+        await client.play_random(lib=args.library, clear=args.clear, base=args.base)
 
 def main():
     try:
