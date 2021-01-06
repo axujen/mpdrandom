@@ -16,10 +16,13 @@
 
 """This is a script to randomly select an album in the current mpd playlist."""
 
+from argparse import ArgumentParser
+from mpd.asyncio import MPDClient
+from mpd.base import VERSION
+from threading import Thread
+import asyncio
 import random
-import select
 import sys
-import mpd
 
 
 # Default Server info, change these values to match yours.
@@ -29,18 +32,17 @@ PASSWORD = None
 
 
 
-class Client(mpd.MPDClient):
+class Client(MPDClient):
     """Client that connects and communicates with the mpd server."""
 
-    def __init__(self, server_id, password=False):
-        mpd.MPDClient.__init__(self)
-        self.connect(**server_id)
+    def __init__(self, password=False):
+        MPDClient.__init__(self)
         if password:
             self.password(password)
 
-    def getalbums(self):
+    async def getalbums(self):
         """Grab a list of the albums in the playlist."""
-        playlist = self.playlistinfo()
+        playlist = await self.playlistinfo()
         albums = {}
         for song in playlist:
             try:
@@ -54,19 +56,19 @@ class Client(mpd.MPDClient):
 
         return albums
 
-    def getcurrent_album(self):
+    async def getcurrent_album(self):
         """Get the currently playing album."""
         try:
-            album = self.currentsong()['album']
+            album = (await self.currentsong())['album']
         except KeyError:
             album = None
         return album
 
-    def random_album(self, albums):
+    async def random_album(self, albums):
         """Get a random album from the albums dictionary."""
         albums = list(albums.keys())
         # Everything except the current playing album
-        current_album = self.getcurrent_album()
+        current_album = await self.getcurrent_album()
         if current_album:
             albums.pop(albums.index(current_album))
         if albums:
@@ -74,21 +76,21 @@ class Client(mpd.MPDClient):
         else:
             return None
 
-    def play_album(self, album):
+    async def play_album(self, album):
         """Play the first song in the given album."""
         song = album[0]
         print('Playing album "%s - %s".' % (song.get('artist', '<no artist>'), song.get('album', '<no album>')))
-        self.playid(song['id'])
+        await self.playid(song['id'])
 
     def get_mpd_lib_version(self):
-        version = mpd.VERSION
+        version = VERSION
         return version[0]*100 + version[1]*10 + version[2]
 
-    def play_random(self, lib=False, clear=False):
+    async def play_random(self, lib=False, clear=False):
         """Play a random album from the list of albums."""
         if not lib:  # Play from the playlist
-            albums = self.getalbums()
-            toplay = self.random_album(albums)
+            albums = await self.getalbums()
+            toplay = await self.random_album(albums)
             if toplay:  # Make sure we found a random album
                 self.play_album(albums[toplay])
             else:
@@ -96,42 +98,69 @@ class Client(mpd.MPDClient):
         else:  # Play from the library
             if clear:
                 self.clear()
-            album_name = random.choice(self.list('album'))  # Select a random album from the library
+            album_name = random.choice(await self.list('album'))  # Select a random album from the library
             if self.get_mpd_lib_version() >= 110:
                 # Since version 1.1.0 list returns a list of dictionaries
                 album_name = album_name['album']
             if album_name:
-                if album_name not in self.getalbums():  # Queue the album if not queued
-                    self.findadd('album', album_name)
+                if album_name not in await self.getalbums():  # Queue the album if not queued
+                    await self.findadd('album', album_name)
 
-                album = self.getalbums()[album_name]
-                self.play_album(album)
+                album = (await self.getalbums())[album_name]
+                await self.play_album(album)
 
-    def idleloop(self, lib, clear):
-        """Loop for daemon mode."""
+    def stdio_monitor_thread(self, loop, queue):
         while True:
-            while self.currentsong():
-                self.send_idle('player')
-                try:
-                    i, o, e  = select.select([self, sys.stdin], [], [])
-                except KeyboardInterrupt:
-                    sys.exit()
-                finally:
-                    self.noidle()
-                if sys.stdin in i:
-                    sys.stdin.readline()
-                    break
-            self.play_random(lib, clear)
+            sys.stdin.readline()
+            # add the message to the queue, don't use queue.put_nowait directly here because the queue
+            # itself is not thread safe.
+            loop.call_soon_threadsafe(queue.put_nowait, "received line on stdin")
 
-    def move_album(self, album, pos=0):
+    async def idle_monitor_task(self, queue):
+        while True:
+            if await self.currentsong():
+                async for subsystem in self.idle(["player"]):
+                    break
+            else:
+                await queue.put("current album finished")
+                # make sure that the message was handled
+                await queue.join()
+
+    async def idleloop(self, lib, clear):
+        """Loop for daemon mode."""
+
+        # Create a queue that we will use to return events in those two cases:
+        # 1. When the player becomes idle.
+        # 2. When we received a line on stdin.
+        queue = asyncio.Queue(1)
+
+        # Create a task to detect when the player becomes idle.
+        idle = asyncio.create_task(self.idle_monitor_task(queue))
+
+        # Create a separate thread that will read from stdin. This is needed because asyncio
+        # doesn't support file IO. Don't use the asyncio style "loop.run_in_executor" here
+        # because then it wouldn't be possible to stop the process with ctrl-c.
+        # See also: https://stackoverflow.com/questions/49992329/the-workers-in-threadpoolexecutor-is-not-really-daemon
+        # By using a normal thread we can mark it as a daemon so it will be closed once the main thread exits.
+        loop = asyncio.get_running_loop()
+        thread = Thread(target=self.stdio_monitor_thread, args=[loop, queue], daemon=True)
+        thread.start()
+
+        # both of the above will push messages into the queue
+        while True:
+            await queue.get()
+            await self.play_random(lib, clear)
+            queue.task_done()
+
+    async def move_album(self, album, pos=0):
         """Insert an album in the playlist."""
         for song in album:
-            self.moveid(song['id'], pos)
+            await self.moveid(song['id'], pos)
             pos += 1
 
-    def shuffle_albums(self):
+    async def shuffle_albums(self):
         """Shuffle the albums in the playlist."""
-        albums = self.getalbums()
+        albums = await self.getalbums()
 
         # Shuffle the albums
         album_names = list(albums.keys())
@@ -139,16 +168,10 @@ class Client(mpd.MPDClient):
 
         # Insert the new shuffled list
         for album in album_names:
-            self.move_album(albums[album])
+            await self.move_album(albums[album])
 
-    def __del__(self):
-        """Close client after exiting."""
-        self.close()
-
-
-def main():
+async def async_main():
     # Arguments
-    from argparse import ArgumentParser
     arguments = ArgumentParser(description="Pick and play a random album from "
                                "the current playlist")
     arguments.add_argument('-d', '--daemon', action='store_true', dest='daemon',
@@ -167,20 +190,22 @@ def main():
                     help='specify mpd\'s password', metavar='PASSWORD')
     args = arguments.parse_args()
 
-    SERVER_ID = {"host": args.host, "port": args.port}
-    client = Client(SERVER_ID, args.password)
+    client = Client(args.password)
+    await client.connect(args.host, args.port)
     if args.daemon:
-        try:
-            print("Going into daemon mode, press Ctrl-C to exit.")
-            print("Press Enter to skip the current album.")
-            client.idleloop(lib=args.library, clear=args.clear)
-        except KeyboardInterrupt:
-            raise SystemExit  # No need for the ugly traceback when interrupting.
+        print("Going into daemon mode, press Ctrl-C to exit.")
+        print("Press Enter to skip the current album.")
+        await client.idleloop(lib=args.library, clear=args.clear)
     elif args.shuffle:
-        client.shuffle_albums()
-        raise SystemExit
+        await client.shuffle_albums()
     else:
-        client.play_random(lib=args.library, clear=args.clear)
+        await client.play_random(lib=args.library, clear=args.clear)
+
+def main():
+    try:
+        asyncio.run(async_main())
+    except KeyboardInterrupt:
+        raise SystemExit  # No need for the ugly traceback when interrupting.
 
 if __name__ == '__main__':
     main()
