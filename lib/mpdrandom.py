@@ -18,7 +18,7 @@
 
 from argparse import ArgumentParser
 from mpd.asyncio import MPDClient
-from mpd.base import VERSION
+from mpd.base import VERSION, CommandError
 from threading import Thread
 import asyncio
 import random
@@ -100,7 +100,11 @@ class Client(MPDClient):
                 self.clear()
             album_name = None
             if base:
-                album_name = random.choice(await self.list('album', 'base', base))
+                try:
+                    album_name = random.choice(await self.list('album', 'base', base))
+                except CommandError as e:
+                    print("Base directory '{}' invalid: {}".format(base, e))
+                    raise SystemExit
             else:
                 album_name = random.choice(await self.list('album'))
 
