@@ -92,7 +92,7 @@ class Client(MPDClient):
             albums = await self.getalbums()
             toplay = await self.random_album(albums)
             if toplay:  # Make sure we found a random album
-                self.play_album(albums[toplay])
+                await self.play_album(albums[toplay])
             else:
                 print("Nothing to play.")
         else:  # Play from the library
