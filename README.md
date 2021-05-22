@@ -8,12 +8,11 @@ Is a script that adds some randomness to mpds albums.
 * Shuffle: Shuffle all albums in the current playlist.
 * Play albums randomly from the library 
 * Play albums randomly from a base directory
-
-#Installation
+# Installation
 	git clone git://github.com/axujen/mpdrandom.git
 	cd mpdrandom
 	sudo ./setup.py install
-#Usage
+# Usage
     usage: mpdrandom [-h] [-d] [-l] [-c] [-z] [-p PORT] [-u HOST]
                      [--password PASSWORD] [-b BASE]
     
@@ -30,5 +29,11 @@ Is a script that adds some randomness to mpds albums.
       -u HOST, --host HOST  specify mpd's host (defaults to 127.0.0.1)
       --password PASSWORD   specify mpd's password
       -b BASE, --base BASE  specify base directory for adding from library
-#Thanks
+# Thanks
 Thanks to [kmac](https://github.com/kmac/mpdscripts/blob/master/mpd-random-pl-album.py). His script inspired me to make my own.
+
+Also for various [pull requests](https://github.com/axujen/mpdrandom/pulls?q=is%3Apr+is%3Aclosed):
+* [cbumae](https://github.com/cbumae)
+* [bi0ha2ard](https://github.com/bi0ha2ard)
+* [vbabiy](https://github.com/vbabiy)
+* [Polochon-street](https://github.com/Polochon-street)
