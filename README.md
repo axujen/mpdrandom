@@ -1,6 +1,7 @@
 mpdrandom
 ============
 Is a script that adds some randomness to mpds albums.
+NOTE: this script expects your music library to be properly tagged, personally on linux i use beets
 
 # Features
 * Pick a random album from the playlist and play it
