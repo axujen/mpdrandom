@@ -119,7 +119,7 @@ class Client(MPDClient):
                 await self.play_album(album)
 
     def stdio_monitor_thread(self, loop, queue):
-        while True:
+        while sys.stdin.isatty():
             sys.stdin.readline()
             # add the message to the queue, don't use queue.put_nowait directly here because the queue
             # itself is not thread safe.
