@@ -1,20 +1,23 @@
-mpdrandom
-============
-Is a script that adds some randomness to mpds albums.
+# mpdrandom
+Is a script that allows you to play entire albums randomly through mpd  
+**NOTE: This script expects your music library to be properly tagged, personally on linux i use [beets](https://beets.io/)**
 
-NOTE: this script expects your music library to be properly tagged, personally on linux i use beets
-
-# Features
-* Pick a random album from the playlist and play it
+## Features
+* Pick a random album from the playlist and play it.
 * Daemon mode: Play a random album when you reach the end of the current one.
 * Shuffle: Shuffle all albums in the current playlist.
-* Play albums randomly from the library 
-* Play albums randomly from a base directory
-# Installation
+* Play albums randomly from the library.
+* Play albums randomly from a base directory.
+
+## Installation
+For Arch Linux users you may use the pkgbuild from https://aur.archlinux.org/packages/mpdrandom-git/
+
+### For other distros
 	git clone git://github.com/axujen/mpdrandom.git
 	cd mpdrandom
 	sudo ./setup.py install
-# Usage
+
+## Usage
     usage: mpdrandom [-h] [-d] [-l] [-c] [-z] [-p PORT] [-u HOST]
                      [--password PASSWORD] [-b BASE]
     
@@ -31,6 +34,7 @@ NOTE: this script expects your music library to be properly tagged, personally o
       -u HOST, --host HOST  specify mpd's host (defaults to 127.0.0.1)
       --password PASSWORD   specify mpd's password
       -b BASE, --base BASE  specify base directory for adding from library
+
 # Thanks
 Thanks to [kmac](https://github.com/kmac/mpdscripts/blob/master/mpd-random-pl-album.py). His script inspired me to make my own.
 
