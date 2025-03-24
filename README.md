@@ -1,3 +1,4 @@
+# **THIS PROJECT IS ABANDONED**
 # mpdrandom
 Is a script that allows you to play entire albums randomly through mpd  
 **NOTE: This script expects your music library to be properly tagged, personally on linux i use [beets](https://beets.io/)**
